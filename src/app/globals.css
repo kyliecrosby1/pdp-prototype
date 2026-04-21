@@ -1,26 +1,281 @@
 @import "tailwindcss";
 
+/* =========================================================================
+   Breakfast – CORE design tokens
+   Mirrors color styles and text styles from the Figma library
+   (Breakfast – CORE, file key B5Wak82FDw3sTKVIeeyWSx).
+   Replace any swatches that change in Figma here.
+   ========================================================================= */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Color primitives (only the ones referenced by styles or seen in CORE) */
+  --color-navy-950: #010b2e;
+  --color-slate-700: #4d546d;
+  --color-slate-500: #808596;
+  --color-slate-400: #b3b6c0;
+  --color-slate-300: #d9dae0;
+  --color-slate-100: #f0f0f2;
+  --color-slate-50: #f7f8f9;
+  --color-white: #ffffff;
+  --color-teal-700: #1d7a7a;
+  --color-teal-100: #d6e9e7;
+  --color-teal-50: #ecf5f4;
+  --color-success: #28ac93;
+  --color-pink-200: #ffc7f6;
+  --color-coral-500: #fa5d66;
+  --color-coral-50: #feeff0;
+
+  /* Semantic color tokens (Figma style names → app intent) */
+  --color-background: var(--color-white);
+  --color-foreground: var(--color-navy-950);
+  --color-text-title: var(--color-navy-950);
+  --color-text-body: var(--color-slate-700);
+  --color-text-eyebrow: var(--color-slate-500);
+  --color-text-accent: var(--color-slate-400);
+  --color-text-on-dark: var(--color-white);
+  --color-border-subtle: var(--color-slate-100);
+  --color-border-strong: var(--color-slate-300);
+  --color-surface: var(--color-white);
+  --color-surface-muted: var(--color-slate-50);
+  --color-success-fg: var(--color-success);
+  --color-highlighter: var(--color-pink-200);
+
+  /* Scrims */
+  --gradient-dark-scrim: linear-gradient(180deg, rgba(0, 0, 0, 0.25) 0%, rgba(0, 0, 0, 0) 100%);
+  --gradient-light-scrim: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 100%);
+
+  /* Type families (font CSS vars come from next/font in layout.tsx) */
+  --font-family-sans: var(--font-circular-ll-vip), system-ui, sans-serif;
+  --font-family-serif: var(--font-serif-heading), Georgia, "Times New Roman", serif;
 }
 
+/* Tailwind v4 theme bridge */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-text-title: var(--color-text-title);
+  --color-text-body: var(--color-text-body);
+  --color-text-eyebrow: var(--color-text-eyebrow);
+  --color-text-accent: var(--color-text-accent);
+  --color-text-on-dark: var(--color-text-on-dark);
+
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-strong: var(--color-border-strong);
+
+  --color-surface: var(--color-surface);
+  --color-surface-muted: var(--color-surface-muted);
+
+  --color-success: var(--color-success);
+  --color-highlighter: var(--color-highlighter);
+  --color-coral-500: var(--color-coral-500);
+  --color-coral-50: var(--color-coral-50);
+  --color-teal-700: var(--color-teal-700);
+  --color-teal-100: var(--color-teal-100);
+  --color-teal-50: var(--color-teal-50);
+
+  --font-sans: var(--font-family-sans);
+  --font-serif: var(--font-family-serif);
+  --font-mono: var(--font-geist-mono);
+  --font-serif-heading: var(--font-serif-heading);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-text-body);
+  font-family: var(--font-family-sans);
+}
+
+/* =========================================================================
+   Text styles — one class per Figma text style.
+   Use semantic class names in markup (e.g. <h1 className="text-mobile-hero">).
+   ========================================================================= */
+
+.font-serif-heading {
+  font-family: var(--font-family-serif);
+}
+
+/* Mobile */
+.text-mobile-hero {
+  font-family: var(--font-family-serif);
+  font-weight: 400;
+  font-size: 56px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+.text-mobile-hero-xl {
+  font-family: var(--font-family-serif);
+  font-weight: 200;
+  font-size: 56px;
+  line-height: 1;
+}
+.text-mobile-header-xl {
+  font-family: var(--font-family-serif);
+  font-weight: 400;
+  font-size: 44px;
+  line-height: 1;
+}
+.text-mobile-header-xl-extralight {
+  font-family: var(--font-family-serif);
+  font-weight: 200;
+  font-size: 44px;
+  line-height: 1;
+}
+.text-mobile-header-large {
+  font-family: var(--font-family-serif);
+  font-weight: 400;
+  font-size: 34px;
+  line-height: 1;
+}
+.text-mobile-header-large-extralight {
+  font-family: var(--font-family-serif);
+  font-weight: 200;
+  font-size: 34px;
+  line-height: 1;
+}
+.text-mobile-header-large-it {
+  font-family: var(--font-family-serif);
+  font-weight: 400;
+  font-style: italic;
+  font-size: 34px;
+  line-height: 1;
+}
+.text-mobile-header-small {
+  font-family: var(--font-family-serif);
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+.text-mobile-subhead {
+  font-family: var(--font-family-sans);
+  font-weight: 500;
+  font-size: 17px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.text-mobile-subhead-bold {
+  font-family: var(--font-family-sans);
+  font-weight: 700;
+  font-size: 17px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.text-mobile-body-large {
+  font-family: var(--font-family-sans);
+  font-weight: 450;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+.text-mobile-body-large-bold {
+  font-family: var(--font-family-sans);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+.text-mobile-body-small {
+  font-family: var(--font-family-sans);
+  font-weight: 450;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+.text-mobile-body-small-bold {
+  font-family: var(--font-family-sans);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+.text-mobile-eyebrow {
+  font-family: var(--font-family-sans);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: 0.0833em;
+  text-transform: uppercase;
+}
+.text-mobile-fineprint {
+  font-family: var(--font-family-sans);
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+
+/* Desktop */
+.text-d-hero {
+  font-family: var(--font-family-serif);
+  font-weight: 400;
+  font-size: 76px;
+  line-height: 1;
+}
+.text-d-hero-extralight {
+  font-family: var(--font-family-serif);
+  font-weight: 200;
+  font-size: 76px;
+  line-height: 1;
+}
+.text-d-header-xl {
+  font-family: var(--font-family-serif);
+  font-weight: 400;
+  font-size: 56px;
+  line-height: 1;
+}
+.text-d-header-xl-extralight {
+  font-family: var(--font-family-serif);
+  font-weight: 200;
+  font-size: 56px;
+  line-height: 1;
+}
+.text-d-header-large {
+  font-family: var(--font-family-serif);
+  font-weight: 400;
+  font-size: 44px;
+  line-height: 1;
+}
+.text-d-header-small {
+  font-family: var(--font-family-serif);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+.text-d-subhead {
+  font-family: var(--font-family-sans);
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+.text-d-body-large {
+  font-family: var(--font-family-sans);
+  font-weight: 450;
+  font-size: 18px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+.text-d-body-small {
+  font-family: var(--font-family-sans);
+  font-weight: 450;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+}
+.text-d-eyebrow {
+  font-family: var(--font-family-sans);
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0.0833em;
+  text-transform: uppercase;
+}
+.text-d-fineprint {
+  font-family: var(--font-family-sans);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
 }
