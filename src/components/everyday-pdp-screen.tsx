@@ -41,7 +41,7 @@ const frequencies: Array<{
   },
   {
     id: "every60",
-    title: "Every 60 photos",
+    title: "Flexible (Every 60 photos)",
     bullets: [
       { icon: "book", text: "A book prints each time 60 photos are added" },
       { icon: "heart", text: "Automatic photo curation (set it and forget it)" },
@@ -118,24 +118,28 @@ type CoverDesign = {
   image?: string;
   outline?: boolean;
   upcharge?: number;
+  // Solid color used by the BookSkewie cover preview. For minis (and other
+  // patterned swatches) this lets us paint the book frame as a single
+  // representative color instead of tiling the pattern imagery.
+  previewColor?: string;
 };
 
 // The 5x5" minis have their own unique set of solid colors & multi-quadrant
 // patterns (Monthly only). Imagery is pulled from the Notion matrix doc.
 const MINIS_DESIGNS: CoverDesign[] = [
-  { id: "minis-gray", label: "Gray", type: "pattern", image: "/images/minis-swatches/gray.png" },
-  { id: "minis-sage", label: "Sage", type: "pattern", image: "/images/minis-swatches/sage.png" },
-  { id: "minis-dusty-rose", label: "Dusty rose", type: "pattern", image: "/images/minis-swatches/dusty-rose.png" },
-  { id: "minis-dark-teal", label: "Dark teal", type: "pattern", image: "/images/minis-swatches/dark-teal.png" },
-  { id: "minis-cream", label: "Cream", type: "pattern", image: "/images/minis-swatches/cream.png" },
-  { id: "minis-olive", label: "Olive", type: "pattern", image: "/images/minis-swatches/olive.png" },
-  { id: "minis-red", label: "Red", type: "pattern", image: "/images/minis-swatches/red.png" },
-  { id: "minis-yellow", label: "Yellow", type: "pattern", image: "/images/minis-swatches/yellow.png" },
-  { id: "minis-pink", label: "Pink", type: "pattern", image: "/images/minis-swatches/pink.png" },
-  { id: "minis-blue", label: "Blue", type: "pattern", image: "/images/minis-swatches/blue.png" },
-  { id: "minis-lavender", label: "Lavender", type: "pattern", image: "/images/minis-swatches/lavender.png" },
-  { id: "minis-muted-quad", label: "Muted multi", type: "pattern", image: "/images/minis-swatches/muted-quad.png" },
-  { id: "minis-bright-quad", label: "Bright multi", type: "pattern", image: "/images/minis-swatches/bright-quad.png" },
+  { id: "minis-bright-quad", label: "Bright multi", type: "pattern", image: "/images/minis-swatches/bright-quad.png", previewColor: "#ff7a5c" },
+  { id: "minis-muted-quad", label: "Muted multi", type: "pattern", image: "/images/minis-swatches/muted-quad.png", previewColor: "#d0a29a" },
+  { id: "minis-lavender", label: "Lavender", type: "pattern", image: "/images/minis-swatches/lavender.png", previewColor: "#b48ec9" },
+  { id: "minis-blue", label: "Blue", type: "pattern", image: "/images/minis-swatches/blue.png", previewColor: "#4d94cf" },
+  { id: "minis-pink", label: "Pink", type: "pattern", image: "/images/minis-swatches/pink.png", previewColor: "#ea95a5" },
+  { id: "minis-yellow", label: "Yellow", type: "pattern", image: "/images/minis-swatches/yellow.png", previewColor: "#f3d34e" },
+  { id: "minis-red", label: "Red", type: "pattern", image: "/images/minis-swatches/red.png", previewColor: "#e0322d" },
+  { id: "minis-olive", label: "Olive", type: "pattern", image: "/images/minis-swatches/olive.png", previewColor: "#5f6e4c" },
+  { id: "minis-cream", label: "Cream", type: "pattern", image: "/images/minis-swatches/cream.png", previewColor: "#d8c3a6" },
+  { id: "minis-dark-teal", label: "Dark teal", type: "pattern", image: "/images/minis-swatches/dark-teal.png", previewColor: "#2b4b4e" },
+  { id: "minis-dusty-rose", label: "Dusty rose", type: "pattern", image: "/images/minis-swatches/dusty-rose.png", previewColor: "#b58a92" },
+  { id: "minis-sage", label: "Sage", type: "pattern", image: "/images/minis-swatches/sage.png", previewColor: "#789a8a" },
+  { id: "minis-gray", label: "Gray", type: "pattern", image: "/images/minis-swatches/gray.png", previewColor: "#b0b0b3" },
 ];
 
 // Standard swatch set shared by non-minis sizes across all frequencies.
@@ -412,32 +416,42 @@ export function EverydayPdpScreen() {
   // Hardcover is disabled whenever 5 x 5" minis is the active size.
   const hardcoverDisabled = size === "5mini";
 
-  // Changing frequency invalidates selections that no longer exist for the
-  // new frequency (5x5 minis isn't offered for every60/once, design palettes
-  // differ, billing cadence IDs differ).
+  // Any change to an earlier selector resets every selection that comes
+  // after it, so the user explicitly re-picks downstream options instead of
+  // silently inheriting stale state from a previous flow.
   function handleFrequencyChange(next: FrequencyId) {
+    if (next === frequency) return;
     setFrequency(next);
-    const validSizes = sizesByFrequency[next];
-    const nextSize = size && validSizes.some((s) => s.id === size) ? size : null;
-    if (nextSize !== size) setSize(nextSize);
-    const validDesigns = getActiveDesigns(next, nextSize);
-    if (coverDesign && !validDesigns.some((d) => d.id === coverDesign)) setCoverDesign(null);
+    setSize(null);
+    setCoverType(null);
+    setCoverDesign(null);
     setBilling(null);
     setEvery60Payment(null);
     setEvery60Cadence("other-month");
   }
 
-  // Changing size can change the available design palette (5x5 minis swaps
-  // in its own unique swatches) and also can invalidate hardcover.
   function handleSizeChange(next: SizeId) {
+    if (next === size) return;
     setSize(next);
-    if (next === "5mini" && coverType === "hard") setCoverType(null);
-    if (frequency) {
-      const validDesigns = getActiveDesigns(frequency, next);
-      if (coverDesign && !validDesigns.some((d) => d.id === coverDesign)) {
-        setCoverDesign(null);
-      }
-    }
+    setCoverType(null);
+    setCoverDesign(null);
+    setBilling(null);
+    setEvery60Payment(null);
+  }
+
+  function handleCoverTypeChange(next: CoverTypeId) {
+    if (next === coverType) return;
+    setCoverType(next);
+    setCoverDesign(null);
+    setBilling(null);
+    setEvery60Payment(null);
+  }
+
+  function handleCoverDesignChange(next: CoverDesign["id"]) {
+    if (next === coverDesign) return;
+    setCoverDesign(next);
+    setBilling(null);
+    setEvery60Payment(null);
   }
 
   // Every60 customizable billing UI feeds into the shared `billing` state so
@@ -620,7 +634,7 @@ export function EverydayPdpScreen() {
 
         {/* ═══ How often ═══ */}
         <section className="px-6 pt-2">
-          <h2 className="text-mobile-header-small text-text-title">How often would you like to receive books?</h2>
+          <h2 className="text-mobile-header-small text-text-title">How do you want to make your photo books?</h2>
           <div className="mt-5 flex flex-col gap-3">
             {frequencies.map((f) => (
               <FrequencyCard
@@ -673,7 +687,7 @@ export function EverydayPdpScreen() {
                   <button
                     key={c.id}
                     type="button"
-                    onClick={() => !disabled && setCoverType(c.id)}
+                    onClick={() => !disabled && handleCoverTypeChange(c.id)}
                     disabled={disabled}
                     aria-disabled={disabled}
                     className={`flex flex-col gap-2 rounded-2xl border-[1.5px] bg-surface p-2 transition ${
@@ -708,7 +722,7 @@ export function EverydayPdpScreen() {
                 <button
                   key={c.id}
                   type="button"
-                  onClick={() => setCoverDesign(c.id)}
+                  onClick={() => handleCoverDesignChange(c.id)}
                   aria-label={c.label}
                   className="flex shrink-0 flex-col items-center"
                 >
@@ -848,7 +862,8 @@ export function EverydayPdpScreen() {
              so the previous selector's "peek" shows through, hinting that
              additional options exist. ═══ */}
         <section
-          className="relative px-6 pb-10 pt-16"
+          id="why-everyday-books"
+          className="relative scroll-mt-4 px-6 pb-10 pt-16"
           style={{
             background:
               "linear-gradient(to bottom, rgba(233,234,255,0) 0%, #e9eaff 23%, rgba(233,234,255,0) 68%)",
@@ -1026,28 +1041,73 @@ export function EverydayPdpScreen() {
 
 function Hero() {
   return (
-    <section className="relative bg-[#f0f0f2]">
-      {/* Back overlay directly on the hero gradient (no separate header bar) */}
-      <div className="flex items-center px-6 pt-12 pb-2">
-        <Link
-          href="/"
-          aria-label="Back"
-          className="flex h-6 w-6 items-center justify-center text-text-title"
+    <section className="relative bg-surface">
+      {/* Auto-playing hero video sits behind the nav/title, bleeding edge-to-edge.
+          The aspect-ratio keeps layout stable while the video loads. */}
+      <div className="absolute inset-x-0 top-[96px] h-[373px] overflow-hidden">
+        {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          className="h-full w-full object-cover"
         >
-          <ChevronLeftIcon className="h-6 w-6" />
-        </Link>
+          <source src="/videos/hero.mp4" type="video/mp4" />
+        </video>
       </div>
 
-      <div className="px-6 pt-2 pb-4">
-        <h1 className="text-mobile-header-large text-text-title">Everyday Photo Books</h1>
+      {/* Top fade: short, soft white → transparent so the video edge blends
+          into the nav area without hiding too much of the video. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-[96px] z-[1] h-[110px]"
+        style={{
+          background:
+            "linear-gradient(to bottom, #ffffff 0%, rgba(255,255,255,0.55) 45%, rgba(255,255,255,0) 100%)",
+        }}
+      />
+
+      {/* Bottom fade: enough lift at the end for the copy to sit comfortably,
+          but stays transparent through most of its height so the video
+          remains visible behind it. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-[349px] z-[1] h-[120px]"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.55) 55%, #ffffff 100%)",
+        }}
+      />
+
+      {/* Nav bar + title (overlaid on video) */}
+      <div className="relative z-[2]">
+        <div className="flex items-center px-6 pt-12 pb-2">
+          <Link
+            href="/"
+            aria-label="Back"
+            className="flex h-6 w-6 items-center justify-center text-text-title"
+          >
+            <ChevronLeftIcon className="h-6 w-6" />
+          </Link>
+        </div>
+        <div className="px-6 pt-2 pb-4">
+          <h1 className="text-mobile-header-large text-text-title text-center">
+            Everyday Photo Books
+          </h1>
+        </div>
       </div>
 
-      {/* Intentional empty product-image area — matches Figma placeholder space */}
-      <div className="h-[260px]" aria-hidden />
+      {/* Reserve most of the hero video's height, but leave room so the copy
+          below overlays the bottom of the gradient (matches Figma: text block
+          starts ~35px before the video area ends). */}
+      <div className="h-[338px]" aria-hidden />
 
-      {/* White→transparent fade at bottom of hero */}
-      <div className="relative bg-gradient-to-t from-surface via-surface to-transparent px-6 pt-10 pb-6">
-        <p className="text-mobile-body-large text-text-title text-center">
+      {/* Description / rating / product-specs row — overlays the bottom
+          gradient of the hero video. */}
+      <div className="relative z-[2] px-6 pt-0 pb-6">
+        <p className="text-mobile-body-large text-text-body text-center">
           Capture your family&rsquo;s everyday life so nothing slips through the cracks.
         </p>
         <p className="text-mobile-body-large-bold mt-4 text-text-title text-center">
@@ -1061,10 +1121,15 @@ function Hero() {
           </div>
           <button
             type="button"
-            className="text-mobile-body-small-bold inline-flex items-center gap-1 text-text-title"
+            onClick={() => {
+              document
+                .getElementById("why-everyday-books")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="text-mobile-body-small-bold inline-flex items-center gap-1 text-text-title transition hover:opacity-70"
           >
             <ArrowDownIcon className="h-4 w-4" />
-            Jump to details
+            Product specs
           </button>
         </div>
       </div>
@@ -1368,7 +1433,7 @@ function WhyCard({ item }: { item: (typeof whyItems)[number] }) {
 // Short, screen-ready label for each frequency used as the body-copy prefix.
 const FREQUENCY_FOOTER_LABEL: Record<FrequencyId, string> = {
   monthly: "Monthly",
-  every60: "Every 60 photos",
+  every60: "Flexible",
   once: "Just this one book",
 };
 
@@ -1417,10 +1482,17 @@ function StickyCta({
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-6 z-20 flex justify-center px-6 md:pointer-events-auto md:sticky md:bottom-6 md:px-0">
-      <div
-        className="pointer-events-auto w-full max-w-[354px] rounded-[32px] bg-white/40 px-5 py-5 shadow-[0_10px_30px_-12px_rgba(1,11,46,0.22),inset_0_0_0_1px_rgba(255,255,255,0.35)] ring-1 ring-black/[0.04]"
-        style={{ backdropFilter: "blur(20px) saturate(140%)", WebkitBackdropFilter: "blur(20px) saturate(140%)" }}
-      >
+      <div className="relative w-full max-w-[354px]">
+        {selectionComplete ? (
+          <div
+            aria-hidden
+            className="shimmer-stroke pointer-events-none absolute -inset-[2px] rounded-[34px]"
+          />
+        ) : null}
+        <div
+          className="animate-footer-rise pointer-events-auto relative w-full rounded-[32px] bg-white/40 px-5 py-5 shadow-[0_10px_30px_-12px_rgba(1,11,46,0.22),inset_0_0_0_1px_rgba(255,255,255,0.35)] ring-1 ring-black/[0.04]"
+          style={{ backdropFilter: "blur(20px) saturate(140%)", WebkitBackdropFilter: "blur(20px) saturate(140%)" }}
+        >
         <div className="flex items-center gap-3">
           <BookSkewie size={selectedSize?.id ?? null} design={selectedCover} />
           <div className="min-w-0 flex-1">
@@ -1435,11 +1507,12 @@ function StickyCta({
         {selectionComplete ? (
           <button
             type="button"
-            className="mt-4 w-full rounded-full bg-[#1d7a7a] py-4 text-center text-mobile-subhead-bold text-white transition hover:brightness-110"
+            className="cta-shimmer mt-4 w-full rounded-full bg-[#1d7a7a] py-4 text-center text-mobile-subhead-bold text-white transition hover:brightness-110"
           >
-            {frequency === "once" ? "Continue to my photos" : "Continue to checkout"}
+            <span>{frequency === "once" ? "Continue to my photos" : "Continue to checkout"}</span>
           </button>
         ) : null}
+        </div>
       </div>
     </div>
   );
@@ -1469,8 +1542,9 @@ function BookSkewie({
   const width = 42;
   const height = Math.round(width / ratio);
 
-  // No cover selected yet → show the Figma 3D photograph as a neutral placeholder.
-  if (!design) {
+  // Nothing selected yet (no size, no cover) → show the Figma 3D photograph
+  // as a neutral placeholder.
+  if (!size && !design) {
     return (
       <div
         className="relative flex shrink-0 items-center justify-center overflow-hidden rounded-[3px]"
@@ -1491,13 +1565,21 @@ function BookSkewie({
 
   // Ombré swatches collapse to a single solid (the top/first stripe) in the
   // cover preview — gradients don't read as a book cover at this small size.
-  const coverStyle: React.CSSProperties =
-    design.type === "ombre" && design.stripes
-      ? { backgroundColor: design.stripes[0] }
-      : swatchStyle(design);
+  // Patterned swatches (e.g. 5x5 minis) paint as their `previewColor` so the
+  // book reads as a proper cover instead of a tiled motif. Before a cover is
+  // chosen, fall back to a neutral gray frame so the book still reads at the
+  // selected size.
+  const coverStyle: React.CSSProperties = !design
+    ? { backgroundColor: "#c9ccd4" }
+    : design.previewColor
+      ? { backgroundColor: design.previewColor }
+      : design.type === "ombre" && design.stripes
+        ? { backgroundColor: design.stripes[0] }
+        : swatchStyle(design);
 
-  // A cover has been chosen → render a real book preview where the selected
-  // color/pattern paints the cover (outer frame) and the inside is the page block.
+  // A size and/or cover has been chosen → render a real book preview that
+  // respects the selected proportions. The frame uses the cover color when
+  // picked, and a neutral gray while the user is still selecting.
   return (
     <div
       className="relative flex shrink-0 items-center justify-center rounded-[3px] p-[3px] shadow-[0_1px_2px_rgba(0,0,0,0.08)]"

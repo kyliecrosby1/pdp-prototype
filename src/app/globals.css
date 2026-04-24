@@ -279,3 +279,131 @@ body {
   line-height: 1.5;
   letter-spacing: -0.01em;
 }
+
+/* Sticky-footer entrance: slide up from off-screen with a tiny overshoot
+   bounce when the Everyday PDP mounts. */
+@keyframes footer-rise-in {
+  0% {
+    transform: translateY(120%);
+    opacity: 0;
+  }
+  65% {
+    transform: translateY(-6%);
+    opacity: 1;
+  }
+  82% {
+    transform: translateY(2%);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.animate-footer-rise {
+  animation: footer-rise-in 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Rotating conic-gradient stroke that shimmers around the sticky footer when
+   all options are picked — signals the CTA is live. Uses @property so the
+   conic `from` angle is interpolatable. */
+@property --shimmer-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes shimmer-rotate {
+  to {
+    --shimmer-angle: 360deg;
+  }
+}
+@keyframes shimmer-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.shimmer-stroke {
+  padding: 2px;
+  background: conic-gradient(
+    from var(--shimmer-angle),
+    #de85d1 0%,
+    #5b60d3 25%,
+    #1d7a7a 50%,
+    #fa5d66 75%,
+    #de85d1 100%
+  );
+  /* Gradient-border trick: XOR-composite two masks (content-box and
+     padding-box) so only the 2px ring around the edge is painted, leaving
+     the interior fully transparent so the glass card shows through. */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation:
+    shimmer-rotate 3.2s linear infinite,
+    shimmer-fade-in 0.45s ease-out both;
+}
+
+/* Continue-button shimmer: a soft lighter-teal highlight band that sweeps
+   left → right across the CTA background to reinforce the unlocked state.
+   Sweep takes ~2.7s; the remaining ~1.2s is the off-screen pause between
+   sweeps. */
+@keyframes cta-shimmer-sweep {
+  0% {
+    transform: translateX(-110%);
+  }
+  70%,
+  100% {
+    transform: translateX(110%);
+  }
+}
+.cta-shimmer {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.cta-shimmer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* Wider, softer feather — more gradient stops and a lower peak opacity so
+     the highlight reads as a gentle glow rather than a hard line. */
+  background: linear-gradient(
+    115deg,
+    rgba(94, 187, 176, 0) 8%,
+    rgba(94, 187, 176, 0.08) 22%,
+    rgba(94, 187, 176, 0.22) 36%,
+    rgba(138, 217, 205, 0.45) 50%,
+    rgba(94, 187, 176, 0.22) 64%,
+    rgba(94, 187, 176, 0.08) 78%,
+    rgba(94, 187, 176, 0) 92%
+  );
+  transform: translateX(-110%);
+  animation: cta-shimmer-sweep 3.9s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(6px);
+}
+.cta-shimmer > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-footer-rise {
+    animation: none;
+  }
+  .shimmer-stroke {
+    animation: shimmer-fade-in 0.3s ease-out both;
+  }
+  .cta-shimmer::before {
+    animation: none;
+    display: none;
+  }
+}
